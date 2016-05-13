@@ -67,9 +67,9 @@ local function findLib(name, from)
 	for lp in options.libpath:gmatch("([^:]+)") do
 		lp = fs.combine(resolve(from, lp), name)
 		for ext in options.libext:gmatch("([^:]+)") do
-			if fs.exists(lp .. "." .. ext) then return lp .. "." .. ext end
+			if fs.exists(lp .. "." .. ext) and not fs.isDir(lp .. "." .. ext) then return lp .. "." .. ext end
 		end
-		if fs.exists(lp) then return lp end
+		if fs.exists(lp) and not fs.isDir(lp) then return lp end
 	end
 end
 
