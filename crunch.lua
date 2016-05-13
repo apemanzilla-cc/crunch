@@ -73,7 +73,7 @@ local function findLib(name, from)
 	end
 end
 
-local pttrn = "@include[ \t]+([%w%d_-%.]+)"
+local pttrn = "@include[ \t]+([%w%d_-%./\\]+)"
 
 local function crunch(file)
 	local f = fs.open(file, "r")
@@ -108,10 +108,11 @@ local function crunch(file)
 		end
 
 		for k, v in pairs(included) do
-			local crunched = ("%q"):format(crunch(v))
+			local crunched = ("%q"):format(crunch(v):gsub("%%", "%%%%"))
 
 			-- ugliest piece of code i've ever written
-			data = data:gsub("@include[ \t]+("..k..")", "do local e = setmetatable({}, {__index = _G}) e._ENV = e _ENV[\"%1\"] = load(" .. crunched .. ", \"%1\", nil, e)() end")
+			local name = k:match("([^/\\]+)$")
+			data = data:gsub("@include[ \t]+("..k..")", "do local e = setmetatable({}, {__index = _G}) e._ENV = e _ENV[\""..name.."\"] = load("..crunched..", \""..name.."\", nil, e)() end")
 		end
 
 		return data
