@@ -107,20 +107,33 @@ local function crunch(file)
 			error(e, 0)
 		end
 
+		local loaders = {}
+
 		for k, v in pairs(included) do
 			local crunched = ("%q"):format(crunch(v):gsub("%%", "%%%%"))
-
-			-- ugliest piece of code i've ever written
 			local name = k:match("([^/\\]+)$")
-			data = data:gsub("@include[ \t]+("..k..")", "do local e = setmetatable({}, {__index = _G}) e._ENV = e _ENV[\""..name.."\"] = load("..crunched..", \""..name.."\", nil, e)() end")
+			if loaders[name] then error("name conflict: " .. name, 0) end
+			loaders[name] = crunched
+			data = data:gsub("@include[ \t]+("..k..")", "")
+			--data = data:gsub("@include[ \t]+("..k..")", "do local e = setmetatable({}, {__index = _G}) e._ENV = e _ENV[\""..name.."\"] = load("..crunched..", \""..name.."\", nil, e)() end")
 		end
 
-		return data
+		local output = ""
+
+		-- env building
+		for k, v in pairs(loaders) do
+			output = output .. "do local e = setmetatable({}, {__index = _G}) e._ENV = e _ENV[\""..k.."\"] = load("..v..", \""..k.."\", nil, e)() end\n"
+		end
+
+		data = ("%q"):format(data:gsub("%%", "%%%%"))
+		output = output .. "\nreturn load(" .. data .. ", \"" .. fs.getName(file) .. "\", nil, _ENV)(...)"
+
+		return output
 	end
 end
 
+local header = "-- this code was generated using crunch by apemanzilla\n-- you should probably look for the source code elsewhere before attempting to read this file\n\n"
 local output = crunch(options.main)
-local header = "-- this file was generated using crunch by apemanzilla\n-- you should probably look for the source code elsewhere before attempting to read this file\n\n"
 
 if options.output then
 	local f = fs.open(fs.combine(fs.getDir(options.main), "output.lua"), "w")
