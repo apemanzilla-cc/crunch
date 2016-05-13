@@ -23,6 +23,7 @@ while #args > 0 do
 			print("Usage: crunch [options]")
 			print("Options:")
 			print(" -h: show usage")
+			print(" -n <name>: set the name to use for runtime errors in the main file")
 			print(" -d: do not write output to file")
 			print(" -r: run output (all args following -r will be passed to program)")
 			print("Examples:")
@@ -30,6 +31,11 @@ while #args > 0 do
 			print(" 'crunch -d' - builds program but does not save")
 			print(" 'crunch -d -r myarg' - builds program and runs with argument \"myarg\"")
 			return
+		elseif arg == "-n" then
+			options.name = table.remove(args, 1)
+			if not options.name then
+				error("-n option should be followed by an argument", 0)
+			end
 		elseif arg == "-d" then
 			-- debug flag
 			options.output = false
@@ -75,7 +81,7 @@ end
 
 local pttrn = "@include[ \t]+([%w%d_-%.]+)"
 
-local function crunch(file)
+local function crunch(file, loadName)
 	local f = fs.open(file, "r")
 	local data = f.readAll()
 	f.close()
@@ -126,14 +132,14 @@ local function crunch(file)
 		end
 
 		data = ("%q"):format(data)
-		output = output .. "\nreturn load(" .. data .. ", \"" .. fs.getName(file) .. "\", nil, _ENV)(...)"
+		output = output .. "\nreturn load(" .. data .. ", \"" .. (loadName or fs.getName(file)) .. "\", nil, _ENV)(...)"
 
 		return output
 	end
 end
 
-local header = "-- this code was generated using crunch by apemanzilla\n-- you should probably look for the source code elsewhere before attempting to read this file\n\n"
-local output = crunch(options.main)
+local header = "-- this code was generated using crunch by apemanzilla\n-- you should probably look for the source code elsewhere before attempting to read this file\nassert(_HOST or _CC_VERSION, \"CC 1.74+ is required.\")\n\n"
+local output = crunch(options.main, options.name)
 
 if options.output then
 	local f = fs.open(fs.combine(fs.getDir(options.main), "output.lua"), "w")
