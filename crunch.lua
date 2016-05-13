@@ -110,7 +110,7 @@ local function crunch(file)
 		local loaders = {}
 
 		for k, v in pairs(included) do
-			local crunched = ("%q"):format(crunch(v):gsub("%%", "%%%%"))
+			local crunched = ("%q"):format(crunch(v))
 			local name = k:match("([^/\\]+)$")
 			if loaders[name] then error("name conflict: " .. name, 0) end
 			loaders[name] = crunched
@@ -125,7 +125,7 @@ local function crunch(file)
 			output = output .. "do local e = setmetatable({}, {__index = _G}) e._ENV = e _ENV[\""..k.."\"] = load("..v..", \""..k.."\", nil, e)() end\n"
 		end
 
-		data = ("%q"):format(data:gsub("%%", "%%%%"))
+		data = ("%q"):format(data)
 		output = output .. "\nreturn load(" .. data .. ", \"" .. fs.getName(file) .. "\", nil, _ENV)(...)"
 
 		return output
