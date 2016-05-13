@@ -73,7 +73,7 @@ local function findLib(name, from)
 	end
 end
 
-local pttrn = "@include[ \t]+([%w%d_-%./\\]+)"
+local pttrn = "@include[ \t]+([%w%d_-%.]+)"
 
 local function crunch(file)
 	local f = fs.open(file, "r")
@@ -83,7 +83,7 @@ local function crunch(file)
 	local included = {}
 	local ct = 0
 	for include in data:gmatch(pttrn) do
-		local lib = findLib(include, fs.getDir(file))
+		local lib = findLib(include:gsub("%.", "/"), fs.getDir(file))
 		if lib then
 			included[include] = lib
 			ct = ct + 1
@@ -111,7 +111,7 @@ local function crunch(file)
 
 		for k, v in pairs(included) do
 			local crunched = ("%q"):format(crunch(v))
-			local name = k:match("([^/\\]+)$")
+			local name = k:match("([^%.]+)$")
 			if loaders[name] then error("name conflict: " .. name, 0) end
 			loaders[name] = crunched
 			data = data:gsub("@include[ \t]+("..k..")", "")
