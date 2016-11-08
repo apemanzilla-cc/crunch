@@ -128,7 +128,7 @@ local function crunch(file, loadName)
 
 		-- env building
 		for k, v in pairs(loaders) do
-			output = output .. "do local e = setmetatable({}, {__index = _G}) e._ENV = e _ENV[\""..k.."\"] = load("..v..", \""..k.."\", nil, e)() end\n"
+			output = output .. "do local e = setmetatable({}, {__index = _ENV}) e._ENV = e _ENV[\""..k.."\"] = load("..v..", \""..k.."\", nil, e)() end\n"
 		end
 
 		data = ("%q"):format(data)
@@ -148,7 +148,7 @@ if options.output then
 end
 
 if options.run then
-	local env = setmetatable({}, {__index = _G}) env._ENV = env
+	local env = setmetatable({}, {__index = _ENV}) env._ENV = env
 	local f, e = load(output, fs.getName(options.main), nil, env)
 	if not f then error(e, 0) end
 	local ok, e = pcall(f, unpack(options.run))
