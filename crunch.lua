@@ -56,7 +56,8 @@ output = output .. [[
 assert(package, "package API is required")
 table.insert(package.loaders, 1, function(name)
 	for path in package.path:gmatch("[^;]+") do
-		local test = path:gsub("%?", name:gsub("%.", "/"))
+		local p = name:gsub("%.", "/")
+		local test = path:gsub("%?", p)
 		if sources[test] then
 			return function(...)
 				return load(sources[test], name, nil, _ENV)(...)
